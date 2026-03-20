@@ -3,6 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="description" content="Eid Mubarak! Enjoy interactive fireworks and a beautiful greeting. Send this card to your loved ones." />
+<!-- WhatsApp / Social preview (OpenGraph) -->
+<meta property="og:title" content="Eid Mubarak ✨" />
+<meta property="og:description" content="May Allah bless you with peace, joy, and countless blessings this Eid." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="./og-image.svg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Eid Mubarak ✨" />
+<meta name="twitter:description" content="May Allah bless you with peace, joy, and countless blessings this Eid." />
+<meta name="twitter:image" content="./og-image.svg" />
 <title>Eid Mubarak ✨</title>
 <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -338,6 +350,11 @@
   }
   .toast.show { transform: translateX(0); }
 
+  @media (hover: none) {
+    body { cursor: default; }
+    .toast { bottom: 24px; right: 16px; }
+  }
+
   @media (max-width: 480px) {
     .wish-card { padding: 20px 22px; }
     .controls { bottom: 16px; right: 16px; }
@@ -496,6 +513,29 @@ const GREETINGS = [
   { title:'بارك الله فيك 💫', msg:'May the divine blessings of Allah protect and guide you on this beautiful day.' },
   { title:'Mubarak Ho! 🎉', msg:'Sending you warm Eid greetings from the heart. May your home be filled with joy!' },
 ];
+
+// ─── VISITOR COUNT (Free, no backend) ─────────────────────────────────────
+// Note: countapi.xyz "hits" count global views. We also guard with localStorage
+// to avoid counting multiple times per browser/device.
+const COUNTAPI_NAMESPACE = 'eid-mubarak';
+const COUNTAPI_KEY = 'visitors';
+const VISITOR_STORAGE_KEY = 'eid_mubarak_countapi_visitor_1';
+
+async function trackVisit(){
+  try{
+    if(localStorage.getItem(VISITOR_STORAGE_KEY)) return;
+    localStorage.setItem(VISITOR_STORAGE_KEY, '1');
+  }catch(e){ /* localStorage may be blocked */ }
+
+  try{
+    await fetch(`https://api.countapi.xyz/hit/${COUNTAPI_NAMESPACE}/${COUNTAPI_KEY}?amount=1`, {
+      method: 'GET',
+      mode: 'cors'
+    });
+  }catch(e){ /* network issues ignored */ }
+}
+
+trackVisit();
 
 // ─── STARS ─────────────────────────────────────────────────────
 const sf = document.getElementById('starField');
@@ -835,7 +875,8 @@ const toast=document.getElementById('toast');
 
 shareBtn.addEventListener('click',async e=>{
   e.stopPropagation();
-  const msg='🌙 Eid Mubarak! May Allah bless you and your family with peace, joy and happiness this Eid! ✨\n\nhttps://eid.mubarak';
+  const pageUrl = window.location.href;
+  const msg='🌙 Eid Mubarak! May Allah bless you and your family with peace, joy and happiness this Eid! ✨\n\n' + pageUrl;
   if(navigator.share){
     try{ await navigator.share({title:'Eid Mubarak 🌙',text:msg}); return; }catch(err){}
   }
