@@ -219,9 +219,12 @@
   /* ── BUTTONS ── */
   .controls {
     position: fixed;
-    bottom: 24px; right: 24px;
-    display: flex; gap: 12px;
-    z-index: 100;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    right: calc(24px + env(safe-area-inset-right));
+    display: flex;
+    gap: 12px;
+    z-index: 250;
+    touch-action: manipulation;
   }
   .btn {
     width: 48px; height: 48px;
@@ -235,6 +238,7 @@
     transition: all 0.3s;
     backdrop-filter: blur(8px);
     box-shadow: 0 0 16px rgba(212,168,67,0.15);
+    -webkit-tap-highlight-color: transparent;
   }
   .btn:hover { background: rgba(212,168,67,0.15); box-shadow: 0 0 28px rgba(212,168,67,0.4); transform: scale(1.1); }
   .btn.active { background: rgba(212,168,67,0.2); border-color: var(--gold); }
@@ -298,6 +302,10 @@
     text-align: center;
     box-shadow: 0 0 80px rgba(212,168,67,0.3);
     max-width: 90vw;
+    width: min(540px, 92vw);
+    max-height: 80vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
     animation: none;
     pointer-events: none;
   }
@@ -330,13 +338,16 @@
     color: rgba(253,246,227,0.8);
     line-height: 1.8;
     font-weight: 300;
-    max-width: 320px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 8px;
   }
 
   /* ── SHARE TOAST ── */
   .toast {
     position: fixed;
-    bottom: 90px; right: 24px;
+    bottom: calc(90px + env(safe-area-inset-bottom));
+    right: calc(24px + env(safe-area-inset-right));
     background: rgba(212,168,67,0.9);
     color: var(--night);
     padding: 10px 20px;
@@ -352,12 +363,28 @@
 
   @media (hover: none) {
     body { cursor: default; }
-    .toast { bottom: 24px; right: 16px; }
+    .toast {
+      bottom: calc(24px + env(safe-area-inset-bottom) + 56px);
+      right: calc(16px + env(safe-area-inset-right));
+    }
   }
 
   @media (max-width: 480px) {
     .wish-card { padding: 20px 22px; }
-    .controls { bottom: 16px; right: 16px; }
+    .scene { padding: 12px; }
+    .controls {
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      right: calc(16px + env(safe-area-inset-right));
+      gap: 10px;
+    }
+    .btn { width: 44px; height: 44px; font-size: 18px; }
+    .toast {
+      bottom: calc(16px + env(safe-area-inset-bottom) + 60px);
+      right: calc(16px + env(safe-area-inset-right));
+    }
+    .greeting-pop { padding: 28px 18px; }
+    .pop-title { font-size: clamp(32px, 10vw, 52px); }
+    .pop-msg { font-size: 14px; line-height: 1.7; }
     .arabesque { width: 100px; height: 100px; }
   }
 </style>
@@ -496,8 +523,8 @@
 
 <!-- Controls -->
 <div class="controls">
-  <button class="btn" id="soundBtn" title="Toggle Sound">🔇</button>
-  <button class="btn" id="shareBtn" title="Share">📤</button>
+  <button class="btn" id="soundBtn" title="Toggle Sound" aria-label="Toggle Sound">🔇</button>
+  <button class="btn" id="shareBtn" title="Share" aria-label="Share">📤</button>
 </div>
 
 <!-- Share toast -->
@@ -715,6 +742,7 @@ animate();
 
 // ─── AUDIO (Web Audio API synth) ───────────────────────────────
 let audioCtx=null, musicPlaying=false, musicNodes=[];
+let userTouchedSoundControl=false;
 const soundBtn=document.getElementById('soundBtn');
 
 function ensureAudio(){
@@ -764,6 +792,7 @@ function playAmbient(){
 
 soundBtn.addEventListener('click',e=>{
   e.stopPropagation();
+  userTouchedSoundControl=true;
   ensureAudio();
   musicPlaying=!musicPlaying;
   soundBtn.textContent=musicPlaying?'🔔':'🔇';
@@ -823,6 +852,15 @@ function spawnText(x,y){
 let clickCount=0;
 document.addEventListener('click',e=>{
   if(e.target.closest('.controls')) return;
+  // Mobile: first tap anywhere starts sound automatically (must be user gesture).
+  if(!userTouchedSoundControl && !musicPlaying){
+    userTouchedSoundControl=true;
+    ensureAudio();
+    musicPlaying=true;
+    soundBtn.textContent='🔔';
+    soundBtn.classList.add('active');
+    playAmbient();
+  }
   const x=e.clientX, y=e.clientY;
   clickCount++;
 
